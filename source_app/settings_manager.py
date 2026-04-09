@@ -18,6 +18,23 @@ class SettingsManager(QObject):
         self._worker.moveToThread(self._thread)
         self._thread.start()
 
+        app = QApplication.instance()
+        if app is not None:
+            app.aboutToQuit.connect(self.shutdown)
+
+    def shutdown(self):
+        if self._thread is None:
+            return
+        if self._thread.isRunning():
+            self._thread.quit()
+            self._thread.wait(1500)
+
+    def __del__(self):
+        try:
+            self.shutdown()
+        except Exception:
+            pass
+
     @property
     def config(self):
         hard_value = self._hard() if callable(self._hard) else self._hard

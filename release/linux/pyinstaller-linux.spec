@@ -79,7 +79,11 @@ a = Analysis(
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[project_path('runtime_hooks.py')],
-    excludes=["source.utils.os_windows_backend"],
+    excludes=[
+        "source.utils.os_windows_backend",
+        "source.utils.bridge",
+        "source.utils.bridge.bridge",
+    ],
     noarchive=False,
     optimize=1,
 )

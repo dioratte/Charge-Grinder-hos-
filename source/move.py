@@ -227,7 +227,7 @@ def move():
         connection()
         return False
     # fail detection end
-    if now.button("victory"): return False
+    if now.button("victory") or not now.button("Move"): return False
 
     if not now_rgb.button("Danteh"):
         gui.press("d")
@@ -245,8 +245,13 @@ def move():
             return False
     
     regions = directions(is_aligned=False)
+
     adjust = 0
     if len(regions) == 0:
+        gui.press("space")
+        if enter():
+            logging.info("Entering unknown node")
+            return True
         return False
     elif len(regions) == 1:
         region_idx = next(iter(regions.keys()))

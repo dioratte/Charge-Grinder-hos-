@@ -9,14 +9,15 @@ def is_choice_made():
     return wait_while_condition(lambda: now.button("choices"), interval=0.1, timer=1.5)
 
 def event():
-    if not now.button("EGObin.0"): return False
+    if not now.button("event"): return False
     print("event check")
     start_time = time.time()
     while True:
         if time.time() - start_time > 100: return False
         if p.LIMBUS_NAME not in (win := gui.getActiveWindowTitle()): pause(win)
 
-        gui.press("space", presses=3, interval=0.05)
+        now_click.button("skip")
+        gui.press("space")
         
         if now.button("choices"):
             time.sleep(0.1)

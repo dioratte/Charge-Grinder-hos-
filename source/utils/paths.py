@@ -1,8 +1,8 @@
 import os, sys, platform
 
-try:
+if hasattr(sys, "_MEIPASS"):
     BASE_PATH = sys._MEIPASS
-except:
+else:
     BASE_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 
 
@@ -81,9 +81,10 @@ REG = {
 
     # event.py
     "textEGO"        : (1031,  254,  713,  516),
-    "EGObin.0"       : (  66,   35,   90,   90),
+    "event"          : ( 444,   30,  158,  140),
     "check"          : (1265,  434,  430,   87),
     "choices"        : (1036,  152,  199,   77),
+    "skip"           : (1539,  906,  316,  126),
     "Proceed"        : (1539,  906,  316,  126),
     "Commence"       : (1539,  906,  316,  126),
     "Continue"       : (1539,  906,  316,  126),
@@ -130,6 +131,7 @@ REG = {
     "shop"           : ( 332,  158,  121,   55),
     "supershop"      : ( 275,  158,  220,   55),
     "sell"           : ( 776,  118,  127,   70),
+    "notSelected"    : (1209,  435,  153,  140),
     "fusion_available":( 928,  304,  300,   82),
     "fuse_shelf_top" : ( 920,  364,  790,  150),
     "fuse_shelf_peak": ( 920,  304,  790,  150),
@@ -342,7 +344,7 @@ HARD_FLOORS = packs_to_floors(PACKS, hard=True)
 BANNED = [
     "AutomatedFactory", "TheUnloving", "FaithErosion", "TobeCrushed", "TheNoonofViolet", 
     "MurderontheWARPExpress", "FullStoppedbyaBullet", "VainPride", "CrawlingAbyss", "TimekillingTime", 
-    "NocturnalSweeping", "toClaimTheirBones"
+    "NocturnalSweeping", "toClaimTheirBones", "TheDuskofAmber", "CharmWanderDoubt"
 ]
 
 HARD_BANNED = [
@@ -350,8 +352,8 @@ HARD_BANNED = [
     "NocturnalSweeping", 'Line4', 'Line3', 'toClaimTheirBonesBokGak', 'TheEvilDefining', 
     'SinkingDeluge', 'PoisedBreathing', 'InertSloth', 'EmotionalFlood', 'CrawlingAbyss', 
     'TreadwheelSloth', 'VainPride', 'PitifulEnvy', 'TyrannicalPride', 'UnrelentingMight', 
-    'Line5', 'TheSurrenderedWitnessing', 'TheDreamEnding', 'HatredandDespair', 
-    'TimekillingTimeBokGak', 'ImpenetrablePath'
+    'Line5', 'TheSurrenderedWitnessing', 'ImpenetrablePath', "TheDuskofAmber", 
+    "CharmWanderDoubt", "Textbook", "BladeandArtwork", "TheUnsevering"
 ]
 
 

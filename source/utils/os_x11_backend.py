@@ -746,14 +746,14 @@ def moveTo(x, y, duration=0.0, tween=easeInOutQuad, delay=0.09, humanize=True,
             noise=noise,
             offset_x=offset_x, offset_y=offset_y
         )
-        steps = max(10, steps*5)
+        steps = max(10, steps*5.6)
         
         if duration > delay:
             total_duration = duration
         else:
             total_duration = params.get('duration', duration)
         
-        total_duration *= 5
+        total_duration *= 5.6
         step_delay = total_duration / steps if steps > 0 else 0.01
         step_jitter_min, step_jitter_max = profile["step_sleep_jitter"]
 
@@ -858,13 +858,13 @@ def click(x=None, y=None, button='left', clicks=1, interval=0.1, duration=0.0, t
             time.sleep(randomize_with_profile(interval, profile=profile, key="click_interval_jitter"))
             _fail_safe_check()
 
-def dragTo(x, y, duration=0.1, tween=easeInOutQuad, button='left', start_x=None, start_y=None):
+def dragTo(x, y, duration=0.1, tween=easeInOutQuad, button='left', start_x=None, start_y=None, humanize=False):
     _fail_safe_check()
     _apply_macro_rhythm()
     if start_x is not None and start_y is not None:
         moveTo(start_x, start_y)
     mouseDown(button, delay=0.03)
-    moveTo(x, y, duration, tween, humanize=False)
+    moveTo(x, y, duration, tween, humanize=humanize)
     mouseUp(button, delay=0.03)
     _fail_safe_check()
 

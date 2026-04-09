@@ -241,6 +241,12 @@ def concat(dict1, dict2):
     return dict1
 
 def get_inventory():
+    uptie = None
+    while not now_rgb.button("scroll.0") and now_rgb.button("scroll", "scroll_full"):
+        print("scroll down for inventory click alignment")
+        browse(step=300, dur=0.1, pr_end=False)
+        time.sleep(0.5)
+
     if now_rgb.button("scroll.0"):
         h = 0
         adj = 0
@@ -274,10 +280,10 @@ def get_inventory():
             print(adj)
             h += 1
 
-        while not now_rgb.button("scroll") and now_rgb.button("scroll", "scroll_full"):
-            print("scroll up for alignment")
-            browse(step=-300, dur=0.05, pr_end=False)
-            time.sleep(0.5)
+        # while not now_rgb.button("scroll") and now_rgb.button("scroll", "scroll_full"):
+        #     print("scroll up for alignment")
+        #     browse(step=-300, dur=0.05, pr_end=False)
+        #     time.sleep(0.5)
     else:
         box = LocateGray.locate(PTH["gifts_owned"], region=REG["fuse_shelf"])
         region = REG["fuse_shelf"]
@@ -287,6 +293,10 @@ def get_inventory():
             region = (920, y, 790, 777 - y)
         
         coords, coords_agg, have, uptie = inventory_check(region, 0)
+    
+    if uptie is None:
+        raise RuntimeError
+    
     p.TO_UPTIE = uptie
     return coords, coords_agg, have
 
@@ -550,8 +560,16 @@ def fuse():
 def confirm_affinity(teams=None):
     if teams is None: teams = p.GIFTS
     if not (0 <= p.IDX < len(teams)): p.IDX = 0
-    click_rgb.button(teams[p.IDX]["checks"][3], "affinity!")
-    win_click(1194, 841)
+    is_not_seleted = True
+    while is_not_seleted:
+        click_rgb.button(teams[p.IDX]["checks"][3], "affinity!")
+        win_click(1194, 841)
+        time.sleep(0.1)
+        if not now.button("notSelected"):
+            is_not_seleted = False
+        else:
+            ClickAction((469, 602), ver="keywordSel").execute(shop_click)
+            win_moveTo(605, 612)
 
 def init_fuse():
     chain_actions(shop_click, [
@@ -568,7 +586,13 @@ def fuse_loop():
     ref_count = 1 + (p.BUFF[5] > 2)
     try:
         while True:
-            missing = fuse()
+            try:
+                missing = fuse()
+            except RuntimeError:
+                print("oops")
+                close_panel()
+                continue
+
             if missing:
                 close_panel()
 
@@ -899,7 +923,6 @@ def buy_skill3():
     sold = []
     if p.SUPER == "supershop":
         sold = LocateGray.locate_all(PTH["purchased"], region=REG["purchased_sup!"])
-
         if now.button("cost", "purchased_sup!") or len(sold) >= 2:
             return
 
@@ -922,10 +945,10 @@ def buy_skill3():
     ClickAction((coord[0], coord[1] - 120), ver="replace").execute(click)
     win_click(1442, 497, duration=0.2)
     win_click(1187, 798, duration=0.2)
-    if not wait_while_condition(lambda: not now.button("connecting"), lambda: win_click(1187, 798), timer=1):
+    if not wait_while_condition(lambda: not loc.button("connecting", wait=0.5), lambda: win_click(1187, 798), timer=1):
         win_click(953, 497, duration=0.2)
         win_click(1187, 798, duration=0.2)
-        if not wait_while_condition(lambda: not now.button("connecting"), lambda: win_click(1187, 798), timer=2):
+        if not wait_while_condition(lambda: not loc.button("connecting", wait=0.5), lambda: win_click(1187, 798), timer=2):
             win_click(772, 800)
             return
     connection()

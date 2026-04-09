@@ -2,7 +2,7 @@ import numpy as np, cv2, random, time, os, platform, logging
 from source.utils.paths import *
 import source.utils.params as p
 
-from PyQt6.QtCore import QMetaObject, Qt
+from PySide6.QtCore import QMetaObject, Qt
 
 if platform.system() == "Windows":
     import source.utils.os_windows_backend as gui

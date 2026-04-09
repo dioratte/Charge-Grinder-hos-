@@ -1,41 +1,89 @@
 from .utils import *
+import os
 import platform
 
-def _is_interception_driver_installed():
-    try:
-        import interception
-        return interception.inputs._g_context.valid
-    except Exception:
-        return False
+LEGACY_DRIVER_PATHS = [
+    r"C:\Windows\System32\drivers\keyboard.sys",
+    r"C:\Windows\System32\drivers\mouse.sys",
+]
+
+
+DISCORD_URL = os.environ.get("CHARGEGRINDER_DISCORD_URL", "https://discord.gg/zQ9AnUkf")
+CONTACT = "@walpth"
+
+
+def _get_existing_legacy_driver_paths():
+    return [path for path in LEGACY_DRIVER_PATHS if os.path.exists(path)]
+
 
 def ensure_interception_driver(app_parent=None):
-    if platform.system() != "Windows" or _is_interception_driver_installed():
+    existing = _get_existing_legacy_driver_paths()
+    if not existing:
         return True
 
-    driver_download_url = "https://github.com/AlexWalp/Interception/releases"
+    driver_download_url = "https://github.com/AlexWalp/Mirror-Dungeon-Bot/releases/tag/delete-interception"
 
     msg = QMessageBox(app_parent)
     msg.setIcon(QMessageBox.Icon.Warning)
-    msg.setWindowTitle("Interception Driver Required")
-    msg.setText("Interception driver is not installed. If you just installed it, please reboot your PC and relaunch ChargeGrinder.")
-    msg.setInformativeText("Open the Interception download page?")
+    msg.setWindowTitle("Interception Driver Installed")
+    msg.setText("Interception driver files were detected. PM will flag your account as suspicious, so Interception must be uninstalled before launching.")
+    msg.setInformativeText("Open the Interception releases page (contains uninstaller)?")
     msg.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
-    if msg.exec() != QMessageBox.StandardButton.Yes:
-        return False
 
-    QMessageBox.information(
-        app_parent,
-        "Download Interception Driver",
-        "A browser page will open. Install the driver manually, reboot your PC, then relaunch ChargeGrinder."
-    )
-
-    try:
-        webbrowser.open(driver_download_url)
-    except Exception:
-        QMessageBox.warning(
+    if msg.exec() == QMessageBox.StandardButton.Yes:
+        QMessageBox.information(
             app_parent,
-            "Open Browser Failed",
-            f"Could not open the browser automatically. Please visit:\n{driver_download_url}"
+            "Uninstall Interception",
+            "A browser page will open. Use the uninstaller, reboot your PC, then relaunch ChargeGrinder."
         )
 
+        try:
+            webbrowser.open(driver_download_url)
+        except Exception:
+            QMessageBox.warning(
+                app_parent,
+                "Open Browser Failed",
+                f"Could not open the browser automatically. Please visit:\n{driver_download_url}"
+            )
+
     return False
+
+
+def prompt_third_party_software(app_parent=None):
+    msg = QMessageBox(app_parent)
+    msg.setIcon(QMessageBox.Icon.Critical)
+    msg.setWindowTitle("3rd Party Software Required")
+    msg.setText("Required 3rd party software was not detected or failed to initialize.")
+    msg.setInformativeText(
+        "Please check out my Discord server. "
+        "If the invite link is expired, contact me directly.\n\n"
+        f"Discord: {DISCORD_URL}\n"
+        f"Contact: {CONTACT}\n\n"
+        "Open the Discord link now?"
+    )
+    msg.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+
+    if msg.exec() == QMessageBox.StandardButton.Yes:
+        try:
+            webbrowser.open(DISCORD_URL)
+        except Exception:
+            QMessageBox.warning(
+                app_parent,
+                "Open Browser Failed",
+                "Could not open the Discord link automatically.\n\n"
+                f"Please open it manually: {DISCORD_URL}\n"
+                f"If expired, contact: {CONTACT}",
+            )
+
+
+def check_windows(app_parent=None):
+    if platform.system() != "Windows":
+        return True
+    
+    if not ensure_interception_driver(app_parent=app_parent):
+        return False
+    
+    if RAISE_ERROR:
+        prompt_third_party_software(app_parent=app_parent)
+        return False
+    return True

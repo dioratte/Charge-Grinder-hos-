@@ -211,9 +211,8 @@ Linux: <br>
 or manually install:
 - `opencv-python-headless`
 - `numpy`
-- `PyQt6`
-- `pywin32` _(Windows only)_
-- `interception-python` _(Windows only)_
+- `PySide6`
+- `pathgenerator`
 - `python-xlib` _(Linux only)_
 - `mss` _(Linux only)_
 - `evdev` _(Linux only)_

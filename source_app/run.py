@@ -1,8 +1,8 @@
 from source_app.utils import *
 from source_app.cache import CacheWorker
 
-from PyQt6.QtCore import QUrl
-from PyQt6.QtNetwork import QNetworkAccessManager, QNetworkRequest, QNetworkReply
+from PySide6.QtCore import QUrl
+from PySide6.QtNetwork import QNetworkAccessManager, QNetworkRequest, QNetworkReply
 
 
 class VersionChecker(QObject):

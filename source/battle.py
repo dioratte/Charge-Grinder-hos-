@@ -304,7 +304,7 @@ def chain(gear_start, gear_end, background):
 
 def fight(lux=False):
     is_tobattle = now.button("TOBATTLE")
-    is_battle   = now_rgb.button("winrate")
+    is_battle   = now_rgb.button("winrate") or now.button("pause")
     if not is_tobattle and not is_battle: return False
     print("battle check")
     if is_tobattle:
@@ -355,7 +355,7 @@ def fight(lux=False):
                 gui.press("enter", 1, 0.1)
                 time.sleep(1)
 
-        if now_rgb.button("EGObin.0"):
+        if now_rgb.button("event"):
             ck = True
             event()
 
