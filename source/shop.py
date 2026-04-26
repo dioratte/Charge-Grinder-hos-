@@ -317,9 +317,11 @@ def fuse_selected():
     wait_while_condition(lambda: not now.button("Confirm.2"), lambda: win_click(1197, 876) if now.button("fuse") else None, timer=1.5)
     wait_while_condition(lambda: not now.button("Confirm"), lambda: gui.press("space") if now.button("Confirm.2") else None, timer=1.5)
     connection()
-    gui.press("space")
-    wait_while_condition(lambda: loc.button("Confirm", wait=0.5))
-    time.sleep(0.2)
+    wait_while_condition(
+        lambda: loc.button("Confirm", wait=1), 
+        lambda: gui.press("space"), 
+        interval=0.2
+    )
 
 def perform_clicks(to_click):
     if p.WISHMAKING and not now_rgb.button("wishmaking"):

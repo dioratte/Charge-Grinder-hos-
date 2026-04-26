@@ -559,11 +559,11 @@ def _init_uinput_devices():
             local_mouse = UInput(**MOUSE_FALLBACK)
             _print_device_data(MOUSE_FALLBACK)
 
-        dev_path = None
-        if hasattr(local_mouse, "device") and hasattr(local_mouse.device, "path"):
-            dev_path = local_mouse.device.path
+        # dev_path = None
+        # if hasattr(local_mouse, "device") and hasattr(local_mouse.device, "path"):
+        #     dev_path = local_mouse.device.path
             
-        _disable_mouse_accel_x11(dev_path)
+        # _disable_mouse_accel_x11(dev_path)
 
         if keyboard_path:
             try:
