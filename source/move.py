@@ -185,12 +185,6 @@ def enter(wait=1):
         return True
     return False
 
-def resolve_bug():
-    # There is a game bug where the keys stop working
-    # Solved by a click
-    x, y = random.randint(1500, 1700), random.randint(300, 500)
-    win_click(x, y)
-
 
 def move():
     enter(wait=False)
@@ -241,7 +235,6 @@ def move():
             if enter():
                 logging.info("Entering unknown node")
                 return True
-            resolve_bug()
             return False
     
     regions = directions(is_aligned=False)
@@ -253,7 +246,6 @@ def move():
         if enter():
             logging.info("Entering unknown node")
             return True
-        resolve_bug()
         return False
     elif len(regions) == 1:
         print("Case 3: No node search, only one direction")
@@ -265,7 +257,10 @@ def move():
         if enter():
             logging.info(f"Entering {name} {'fight'*(name!='Event' and name!='Shop')}")
             return True
-        resolve_bug()
+        win_click(gui.center(region)) # addressing the bug
+        if enter():
+            logging.info(f"Entering {name} {'fight'*(name!='Event' and name!='Shop')}")
+            return True
         return False
     elif all(k in regions for k in (0, 2)):
         print("Case 4: No major adjustment needed for node search")
