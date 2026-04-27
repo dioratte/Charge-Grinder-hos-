@@ -6,14 +6,6 @@ v_list = [0.8, 0.9, 1]
 d_list = [None, -0.1, -0.19]
 keys_map = {0: "w", 1: "d", 2: "s"}
 
-lost_rangs = [
-    (( 201, 1714), (201, 244)), 
-    (( 201, 1714), (844, 881)), 
-    (( 201,  524), (244, 844)), 
-    ((1404, 1714), (244, 844))
-]
-lost_weights = [(x[1]-x[0]) * (y[1]-y[0]) for x, y in lost_rangs]
-
 
 def is_boss(region=(624, 376, 282, 275)):
     image = screenshot(region=region)
@@ -193,6 +185,12 @@ def enter(wait=1):
         return True
     return False
 
+def resolve_bug():
+    # There is a game bug where the keys stop working
+    # Solved by a click
+    x, y = random.randint(1500, 1700), random.randint(300, 500)
+    win_click(x, y)
+
 
 def move():
     enter(wait=False)
@@ -243,6 +241,7 @@ def move():
             if enter():
                 logging.info("Entering unknown node")
                 return True
+            resolve_bug()
             return False
     
     regions = directions(is_aligned=False)
@@ -254,6 +253,7 @@ def move():
         if enter():
             logging.info("Entering unknown node")
             return True
+        resolve_bug()
         return False
     elif len(regions) == 1:
         print("Case 3: No node search, only one direction")
@@ -265,6 +265,7 @@ def move():
         if enter():
             logging.info(f"Entering {name} {'fight'*(name!='Event' and name!='Shop')}")
             return True
+        resolve_bug()
         return False
     elif all(k in regions for k in (0, 2)):
         print("Case 4: No major adjustment needed for node search")
