@@ -190,6 +190,8 @@ class Locate(): # if inputing np.ndarray, convert to BGR first!
     region=(0, 0, 1920, 1080)
     method=cv2.TM_CCOEFF_NORMED
 
+    tsize={"size": None, "name": None}
+
     @staticmethod
     def _prepare_image(image, region):
         if isinstance(image, str):
@@ -226,7 +228,9 @@ class Locate(): # if inputing np.ndarray, convert to BGR first!
     @staticmethod
     def _load_template(template, comp=1, v_comp=None, h_comp=None, distort=None):
         if isinstance(template, str):
+            Locate.tsize["name"] = template
             template = cv2.imread(template)
+            Locate.tsize["size"] = template.shape[1::-1]
         elif not isinstance(template, np.ndarray):
             raise TypeError(f"Locate doesn't support template type '{type(template).__name__}'")
     
@@ -345,11 +349,15 @@ class Locate(): # if inputing np.ndarray, convert to BGR first!
                 # else: print("located image")
 
                 if click:
+                    tsize = (5, 5)
                     if isinstance(click, tuple) and len(click) == 2:
                         res = click
                     else:
                         res = gui.center(res)
-                    win_moveTo(res)
+                        if Locate.tsize["name"] == template:
+                            tsize = Locate.tsize["size"]            
+                    
+                    win_moveTo(res, tsize=tsize)
                     gui.click()
                     # if isinstance(template, str):
                     #     print(f"clicked {os.path.splitext(os.path.basename(template))[0]}")
@@ -723,3 +731,19 @@ def handle_fuckup():
         gui.press("esc")
         if loc.button("forfeit", wait=1):
             gui.press("esc")
+
+
+def input_with_fallback(key, mouse_action, ver_func):
+    if not callable(ver_func) or not callable(mouse_action):
+        raise ValueError("Pass a way to verify and execute the action!")
+    
+    if p.KEY_ERRORS < 3:
+        gui.press(key)
+        if ver_func():
+            return True
+        p.KEY_ERRORS += 1
+    
+    mouse_action()
+    if ver_func():
+        return True
+    return False

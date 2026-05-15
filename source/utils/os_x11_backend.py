@@ -606,7 +606,8 @@ def mouseDown(button='left', delay=0.16, jitter=0.04):
     _btn = _BUTTON_MAP.get(button.lower(), e.BTN_LEFT)
     dev.write(e.EV_KEY, _btn, 1)
     dev.syn()
-    _human_delay(delay, delay + max(0.0, jitter))
+    if delay > 0:
+        _human_delay(delay, delay + max(0.0, jitter))
     _fail_safe_check()
 
 def mouseUp(button='left', delay=0.16, jitter=0.05):
@@ -615,15 +616,16 @@ def mouseUp(button='left', delay=0.16, jitter=0.05):
     _btn = _BUTTON_MAP.get(button.lower(), e.BTN_LEFT)
     dev.write(e.EV_KEY, _btn, 0)
     dev.syn()
-    _human_delay(delay, delay + max(0.0, jitter))
+    if delay > 0:
+        _human_delay(delay, delay + max(0.0, jitter))
     _fail_safe_check()
 
-def _point_distance(a, b):
-    return float(np.hypot(float(a[0]) - float(b[0]), float(a[1]) - float(b[1])))
-
-
-def _within_target_radius(a, b, radius=20.0):
-    return _point_distance(a, b) <= radius
+def _within_target(a, b, size=(20.0, 20.0)):
+    width, height = size if size else (20.0, 20.0)
+    return (
+        abs(float(a[0]) - float(b[0])) <= max(float(width), 0.0) / 2.0 and
+        abs(float(a[1]) - float(b[1])) <= max(float(height), 0.0) / 2.0
+    )
 
 
 def _clamp_point_to_screen_bounds(x, y):
@@ -675,7 +677,7 @@ def _apply_macro_rhythm(profile=None):
     _fail_safe_check()
 
 
-def moveTo(x, y, duration=0, delay=0.0, tsize=(5.0, 5.0), offset_x=0, offset_y=0, curve=1, n_sub=None):
+def moveTo(x, y, duration=0, delay=0.0, tsize=(3.0, 3.0), offset_x=0, offset_y=0, curve=0.8, n_sub=None, inertia=False):
     _fail_safe_check()
     dev = _get_mouse()
     
@@ -685,8 +687,7 @@ def moveTo(x, y, duration=0, delay=0.0, tsize=(5.0, 5.0), offset_x=0, offset_y=0
     end_x, end_y = _clamp_point_to_screen_bounds(end_x, end_y)
 
     tsize = tsize if tsize else (20.0, 20.0)
-    min_target_size = min(tsize)
-    if _within_target_radius((start_x, start_y), (end_x, end_y), radius=min_target_size):
+    if _within_target((start_x, start_y), (end_x, end_y), tsize):
         return
     
     if delay > 0:
@@ -702,7 +703,7 @@ def moveTo(x, y, duration=0, delay=0.0, tsize=(5.0, 5.0), offset_x=0, offset_y=0
             duration_override=duration_override,
             target_width=tsize[0],
             target_height=tsize[1],
-            initial_velocity=get_inherited_velocity(),
+            initial_velocity=get_inherited_velocity() if inertia else None,
             curviness=curve,
             n_submovements=n_sub
         )
@@ -714,7 +715,7 @@ def moveTo(x, y, duration=0, delay=0.0, tsize=(5.0, 5.0), offset_x=0, offset_y=0
         start_x, start_y = get_position()
 
         if not np.any(np.abs(raw_delta) > 15.0) or \
-           _within_target_radius((start_x, start_y), (end_x, end_y), radius=min_target_size):
+           _within_target((start_x, start_y), (end_x, end_y), tsize):
             break
 
         update_pointer_scale(raw_delta, raw_path[0], (start_x, start_y))
@@ -723,7 +724,7 @@ def moveTo(x, y, duration=0, delay=0.0, tsize=(5.0, 5.0), offset_x=0, offset_y=0
     update_inertia(raw_path, times)
 
 
-def click(x=None, y=None, button='left', clicks=1, interval=0.15, duration=0.0, tsize=(5.0, 5.0), delay=0.03):
+def click(x=None, y=None, button='left', clicks=1, interval=0.15, duration=0.0, tsize=(3.0, 3.0), delay=0.03):
     _fail_safe_check()
     profile = get_macro_profile()
     _apply_macro_rhythm(profile)
@@ -743,14 +744,14 @@ def click(x=None, y=None, button='left', clicks=1, interval=0.15, duration=0.0, 
             _fail_safe_check()
 
 
-def dragTo(x, y, duration=0.1, button='left', tsize=(5.0, 5.0), start_x=None, start_y=None, hook=False):
+def dragTo(x, y, duration=0.1, button='left', tsize=(3.0, 3.0), start_x=None, start_y=None, hook=False):
     _fail_safe_check()
     _apply_macro_rhythm()
     if start_x is not None and start_y is not None:
         moveTo(start_x, start_y, tsize=tsize)
     mouseDown(button, delay=0.03)
-    moveTo(x, y, duration=duration, tsize=tsize, n_sub=1)
-    mouseUp(button, delay=0.03)
+    moveTo(x, y, duration=duration, tsize=tsize, n_sub=1, inertia=False)
+    mouseUp(button, delay=0)
 
     if hook:
         mouseDown(button, delay=0.03)
@@ -778,7 +779,6 @@ def scroll(clicks, x=None, y=None):
                 pass
         dev.syn()
         time.sleep(0.02)
-        
     _human_delay()
 
 # Keyboard functions

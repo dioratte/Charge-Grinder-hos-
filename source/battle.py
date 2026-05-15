@@ -264,7 +264,11 @@ def select(sinners):
             win_click(i)
             time.sleep(0.1)
 
-    gui.press("space")
+    input_with_fallback(
+        "space", 
+        lambda: win_click(1728, 884, tsize=(254,  118)), 
+        lambda: loc.button("loading", wait=5)
+    )
     loading_halt()
 
 
@@ -292,12 +296,11 @@ def chain(gear_start, gear_end, background):
     y -= 46
     for i in range(skill_num):
         if moves[i]:
-            win_moveTo(x + 68, y + 190, duration=0.15, tsize=(20, 20))
+            win_moveTo(x + 68, y + 190, duration=0.15, tsize=(60, 60), inertia=True)
         else:
-            win_moveTo(x + 68, y + 80, duration=0.15, tsize=(20, 20))
+            win_moveTo(x + 68, y + 80, duration=0.15, tsize=(60, 60), inertia=True)
         x += 115
-    
-    win_moveTo(x + 80, y + 140, duration=0.15, tsize=(30, 30))
+    win_moveTo(x + 80, y + 140, duration=0.15, tsize=(40, 40), inertia=True)
     gui.mouseUp()
 
 
@@ -346,10 +349,12 @@ def fight(lux=False):
                     gui.press("enter", 1, 0.1)
                     time.sleep(1)
             except gui.ImageNotFoundException:
-                if is_focused:
-                    win_click(1385, 930)
                 gui.press("p", 1, 0.1)
                 time.sleep(0.5)
+
+                if is_focused and not loc.button("winrate_on", "winrate", wait=2, method=cv2.TM_SQDIFF_NORMED):
+                    gui.click()
+
                 if not lux and p.HARD: select_ego()
                 gui.press("enter", 1, 0.1)
                 time.sleep(1)
@@ -402,9 +407,9 @@ def fight(lux=False):
                 logging.info("Battle is over")
                 return True
             
-        for i in range(3):
-            if now_rgb.button(f"end_{i}", "skip_yap"):
-                gui.press("space", 1, 0.1)
+        # for i in range(3):
+        #     if now_rgb.button(f"end_{i}", "skip_yap"):
+        #         gui.press("space")
         
         if p.LIMBUS_NAME not in (win := gui.getActiveWindowTitle()):
             ck = True

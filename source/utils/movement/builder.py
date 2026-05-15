@@ -21,8 +21,8 @@ else:
 # Global configuration
 CFG: dict = {
     "model_path": model_path,
-    "iv_heading_blend": 0.40,
-    "iv_heading_decay_frac": 0.35,
+    "iv_heading_blend": 0.6,
+    "initial_heading_fade": 0.95,
     "bias_along_std": 3.0,
     "bias_perp_std":  2.0,
     "heading_residual_scale": 0.75,
@@ -105,9 +105,23 @@ def sample_duration(dist, override=None):
         return float(override)
     if dist <= 0:
         return 0.05
-    base_duration = -0.317 + 0.161 * np.log2(1 + dist / 20.0) + 0.1
-    sigma = 0.153 
-    final_duration = base_duration + np.random.normal(0, sigma)
+    
+    base_duration = -0.167 + 0.182 * np.log2(1 + (dist + 100) / 60)
+    sigma_min, sigma_max = 0.003, 0.123
+    dist_mid, dist_scale = 80.0, 120.0
+    sigma = sigma_min + (sigma_max - sigma_min) / (1 + np.exp(-(dist - dist_mid) / dist_scale))
+    sigma_left, sigma_right = 0.01, 0.03
+    p_left = sigma_left / (sigma_left + sigma_right)
+
+    if np.random.rand() < p_left:
+        skew_noise = -abs(np.random.normal(0, sigma_left))
+    else:
+        skew_noise = abs(np.random.normal(0, sigma_right))
+
+    mean_noise = np.sqrt(2 / np.pi) * (sigma_right - sigma_left)
+    var_noise = (sigma_left**3 + sigma_right**3) / (sigma_left + sigma_right) - mean_noise**2
+    skew_noise = (skew_noise - mean_noise) * (sigma / np.sqrt(var_noise))
+    final_duration = base_duration + skew_noise
     return float(np.clip(final_duration, 0.05, 5.0))
 
 def _quantize_duration(value: float, sample_rate: int, min_steps: int = 1) -> float:
@@ -153,6 +167,23 @@ def _moving_event_indices(points: np.ndarray) -> np.ndarray:
 def _angle_diff(a: float, b: float) -> float:
     return ((a - b) + math.pi) % (2 * math.pi) - math.pi
 
+def _mirror_into_limit(value: float, limit: float) -> float:
+    if limit <= 0.0:
+        return 0.0
+    period = 4.0 * limit
+    folded = (value + limit) % period
+    if folded > 2.0 * limit:
+        folded = period - folded
+    return folded - limit
+
+def _mirror_edge_band(value: float, limit: float, edge_ratio: float = 0.90) -> float:
+    value = _mirror_into_limit(value, limit)
+    edge = limit * edge_ratio
+    mag = abs(value)
+    if mag <= edge:
+        return value
+    return math.copysign(edge - (mag - edge), value)
+
 
 # Kinematic constraint enforcement
 
@@ -184,39 +215,31 @@ def _integrate_curvature_path(
     ex, ey = float(end[0]),   float(end[1])
     chord_heading = math.atan2(ey - sy, ex - sx)
 
-    # Initial heading bias
-    init_heading_delta = 0.0
-    if initial_velocity is not None:
-        iv = np.asarray(initial_velocity, dtype=float)
-        if float(np.linalg.norm(iv)) > 1.0:
-            iv_heading = math.atan2(float(iv[1]), float(iv[0]))
-            blend = float(CFG["iv_heading_blend"])
-            init_heading_delta = blend * _angle_diff(iv_heading, chord_heading)
-
     # Geometry integration
     dt_geom = duration / n_geom
     step_sizes = np.asarray(speed_geom, dtype=float) * dt_geom
+    cum_steps = np.empty(n_geom, dtype=float)
+    cum_steps[0] = 0.0
+    np.cumsum(step_sizes[:-1], out=cum_steps[1:])
+    total_steps = float(cum_steps[-1])
+    progress = cum_steps / total_steps if total_steps > 1e-6 else np.linspace(0.0, 1.0, n_geom)
+
+    def integrate(theta_abs: np.ndarray) -> np.ndarray:
+        dx_arr = step_sizes * np.cos(theta_abs)
+        dy_arr = step_sizes * np.sin(theta_abs)
+        xs, ys = np.empty(n_geom, dtype=float), np.empty(n_geom, dtype=float)
+        xs[0], ys[0] = sx, sy
+        np.cumsum(dx_arr[:-1], out=xs[1:])
+        np.cumsum(dy_arr[:-1], out=ys[1:])
+        xs[1:] += sx
+        ys[1:] += sy
+        return np.column_stack([xs, ys])
 
     theta_abs = chord_heading + theta_rel_geom
     theta_abs -= theta_abs[0]
     theta_abs += chord_heading
-    if abs(init_heading_delta) > 1e-9:
-        u = np.linspace(0.0, 1.0, n_geom)
-        decay_frac = float(np.clip(CFG["iv_heading_decay_frac"], 1e-6, 1.0))
-        decay = np.clip(1.0 - u / decay_frac, 0.0, 1.0)
-        theta_abs += init_heading_delta * decay * decay * (3.0 - 2.0 * decay)
 
-    dx_arr = step_sizes * np.cos(theta_abs)
-    dy_arr = step_sizes * np.sin(theta_abs)
-
-    xs, ys = np.empty(n_geom, dtype=float), np.empty(n_geom, dtype=float)
-    xs[0], ys[0] = sx, sy
-    np.cumsum(dx_arr[:-1], out=xs[1:])
-    np.cumsum(dy_arr[:-1], out=ys[1:])
-    xs[1:] += sx
-    ys[1:] += sy
-
-    path_raw = np.column_stack([xs, ys])
+    path_raw = integrate(theta_abs)
 
     # Rotate path to align endpoint direction with target
     start_pt  = np.array([sx, sy], dtype=float)
@@ -229,48 +252,46 @@ def _integrate_curvature_path(
         phi_tgt = math.atan2(float(v_to_target[1]), float(v_to_target[0]))
         delta_rot = _angle_diff(phi_tgt, phi_raw)
         if abs(delta_rot) > 1e-6:
-            cos_d, sin_d = math.cos(delta_rot), math.sin(delta_rot)
-            rel = path_raw - start_pt
-            path_raw = start_pt + np.column_stack([
-                rel[:, 0] * cos_d - rel[:, 1] * sin_d,
-                rel[:, 0] * sin_d + rel[:, 1] * cos_d,
-            ])
-            path_raw[0] = start_pt
+            theta_abs = theta_abs + delta_rot
+            path_raw = integrate(theta_abs)
 
-    # S-curve Brownian bridge for the remaining radial residual
-    cum_steps = np.empty(n_geom, dtype=float)
-    cum_steps[0] = 0.0
-    np.cumsum(step_sizes[:-1], out=cum_steps[1:])
-    total_steps = float(cum_steps[-1])
+    if initial_velocity is not None:
+        iv = np.asarray(initial_velocity, dtype=float)
+        if float(np.linalg.norm(iv)) > 1.0:
+            iv_heading = math.atan2(float(iv[1]), float(iv[0]))
+            init_delta = _angle_diff(iv_heading, float(theta_abs[0])) * float(CFG["iv_heading_blend"])
+            fade = max(float(CFG["initial_heading_fade"]), 1e-6)
+            u = np.clip(progress / fade, 0.0, 1.0)
+            w = 1.0 - (3.0 * u * u - 2.0 * u * u * u)
+            theta_abs = theta_abs + init_delta * w
+            path_raw = integrate(theta_abs)
 
-    # if total_steps > 1e-6:
-    #     frac_linear = cum_steps / total_steps
-    # else:
-    #     frac_linear = np.linspace(0.0, 1.0, n_geom)
     end_error = np.array([ex - path_raw[-1, 0], ey - path_raw[-1, 1]], dtype=float)
-    frac_linear = cum_steps / total_steps if total_steps > 1e-6 else np.linspace(0.0, 1.0, n_geom)
-    path = path_raw + frac_linear[:, None] * end_error
-
-    # error_weight = speed_geom / (np.max(speed_geom) + 1e-6)
-    # cum_weight = np.cumsum(error_weight)
-    # end_error = np.array([ex - path_raw[-1, 0], ey - path_raw[-1, 1]], dtype=float)
-    # frac_weighted = cum_weight / cum_weight[-1]
-    # path = path_raw + frac_weighted[:, None] * end_error
+    bridge = progress * progress * (3.0 - 2.0 * progress)
+    path = path_raw + bridge[:, None] * end_error
 
     path[0], path[-1] = [sx, sy], [ex, ey]
     return path
 
 
 def _sample_endpoint_bias(end, angle: float, target_width: float, target_height: float) -> tuple[float, float]:
+    target_width = max(float(target_width), 0.0)
+    target_height = max(float(target_height), 0.0)
     hw, hh = target_width / 2.0, target_height / 2.0
-    along = np.random.normal(0.0, CFG["bias_along_std"])
-    perp  = np.random.normal(0.0, CFG["bias_perp_std"])
     ca, sa = math.cos(angle), math.sin(angle)
+
+    along_half = abs(ca) * hw + abs(sa) * hh
+    perp_half = abs(sa) * hw + abs(ca) * hh
+    along_std = max(float(CFG["bias_along_std"]), along_half)
+    perp_std = max(float(CFG["bias_perp_std"]), perp_half)
+
+    along = np.random.normal(0.0, along_std)
+    perp  = np.random.normal(0.0, perp_std)
     ox, oy = ca * along - sa * perp, sa * along + ca * perp
     ex, ey = float(end[0]), float(end[1])
     return (
-        float(np.clip(ex + ox, ex - hw * 0.90, ex + hw * 0.90)),
-        float(np.clip(ey + oy, ey - hh * 0.90, ey + hh * 0.90))
+        float(ex + _mirror_edge_band(ox, hw)),
+        float(ey + _mirror_edge_band(oy, hh))
     )
 
 def _build_continuous_trajectory(

@@ -18,7 +18,7 @@ def update_inertia(raw_path, times):
         _INERTIA_STATE["velocity"] = np.array([0.0, 0.0])
         return
 
-    lookback = max(3, int(n_pts * 0.1))
+    lookback = max(3, int(n_pts * 0.3))
     dt = times[-1] - times[-lookback]
 
     if dt <= 0.005:
