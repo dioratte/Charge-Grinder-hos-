@@ -143,7 +143,7 @@ def inventory_check(reg, h, uptie_det=True):
     comp = p.WINDOW[2] / 1920
 
     fuse_shelf = screenshot(region=reg)
-    cv2.imwrite(f"testing/fuse{time.time()}.png", fuse_shelf)
+    # cv2.imwrite(f"testing/fuse{time.time()}.png", fuse_shelf)
     image = amplify(fuse_shelf)
 
     for i in range(len(p.GIFTS)):
