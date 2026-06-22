@@ -1256,9 +1256,9 @@ class MyApp(QWidget):
         activated = []
         for i in range(7):
             activated.append(self.buttons[f'on{i}'].isChecked())
-        activated.append(self.hos_mode.isChecked())
         for i in range(10):
             activated.append(getattr(self.buttons[f'buff{i}'], 'config', {}).get('state', 0))
+        activated.append(self.hos_mode.isChecked())
         return activated
     
     def ask_csv(self):
@@ -1290,17 +1290,18 @@ class MyApp(QWidget):
 
     
     def set_buttons_active(self, states):
+        if not states: return
+        if len(states) == 18 and isinstance(states[7], bool) and not isinstance(states[8], bool):
+            states = states[:7] + states[8:] + [states[7]]
         on_buttons = [self.buttons[f'on{i}'] for i in range(7)]
         buff_buttons = [self.buttons[f'buff{i}'] for i in range(10)]
-
         buttons = on_buttons + buff_buttons
-
         for button, state in zip(buttons, states):
             button.setChecked(state)
             if int(state) == 1:
                 icon_path = getattr(button, 'config', {}).get('icon', '')
                 if icon_path:
-                    button.setIcon(QIcon(icon_path))     
+                    button.setIcon(QIcon(icon_path))
             elif int(state) > 1:
                 button.setIcon(QIcon(Bot.APP_PTH[f'grace{"+"*int(state - 1)}']))
             else:
@@ -1308,7 +1309,6 @@ class MyApp(QWidget):
             button.setIconSize(button.size())
             if 'state' in getattr(button, 'config', {}):
                 button.config['state'] = int(state)
-
         if len(states) > 17:
             self.hos_mode.setChecked(bool(states[17]))
 

@@ -40,6 +40,21 @@ super_ranges = {
 }
 
 
+def reroll_until_skill3():
+    if p.HOS_MODE is True:
+        while True:
+            buy_skill3()
+            if now.button("purchased") or now.button("cost", "purchased"):
+                print("Bought Skill 3")
+                break  # skill 3 was bought
+            if balance() < 200:
+                break  # can't afford to reroll
+            win_click(1489, 177, tsize=(180, 53))
+            connection()
+            time.sleep(0.1)
+    else:
+        return
+
 def combo_counter(combo):
     counter = {}
     for tier in combo:
@@ -980,6 +995,40 @@ def buy_skill3():
             return
     connection()
 
+
+def revive_idiots():
+    if p.HOS_MODE is True:
+        return
+    else:
+        revivals = min(p.DEAD, balance()//100)
+        if revivals < 1: return
+
+        ClickAction((293, 705), ver="return").execute(click)
+        for _ in range(revivals):
+            if not wait_while_condition(lambda: now.button("return"), lambda: win_click(1545, 690), timer=3):
+                Action("return", ver=p.SUPER).execute(click)
+                return
+            Action("no_hp", ver="select").execute(click_rgb) # 1700 970
+            Action("select", ver="connecting").execute(click)
+            connection()
+            ClickAction((1545, 500), ver="return").execute(click)
+            time.sleep(0.2)
+        Action("return", ver=p.SUPER).execute(click)
+        time.sleep(0.2)
+
+    def heal_all():
+        if balance() < 100: return
+
+        ClickAction((293, 705), ver="return").execute(click)
+        try:
+            ClickAction((1545, 500), ver="connecting").execute(click)
+            connection()
+            time.sleep(0.2)
+        finally:
+            ClickAction((1545, 500), ver="return").execute(click)
+            Action("return", ver=p.SUPER).execute(click)
+            time.sleep(0.2)
+
 ### General
 def leave():
     ClickAction((1705, 967), ver="ConfirmInvert").execute(click)
@@ -1006,7 +1055,9 @@ def shop():
             )
         ): return False
 
-    buy_skill3()
+    if p.DEAD > 0 and p.HARD:
+        revive_idiots()
+        heal_all()
 
     if p.LVL > 11:
         for _ in range(min(p.LVL - 11, 3)):
