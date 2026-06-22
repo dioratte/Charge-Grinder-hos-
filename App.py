@@ -1730,7 +1730,7 @@ class MyApp(QWidget):
             'wishmaking' : self.buttons['on5'].isChecked(),
             'winrate'    : self.hard or self.buttons['on6'].isChecked(),
             'infinity'   : self.hard and self.buttons['on6'].isChecked(),
-            'hos_mode'   : self.buttons['hos_mode'].isChecked(),
+            'hos_mode'   : self.hos_mode.isChecked(),
             'buff'       : [getattr(self.buttons[f'buff{i}'], 'config', {}).get('state', 0) for i in range(10)],
             'card'       : self.get_cards(),
             'keywordless': {Bot.WORDLESS[id]['name']: state for id, state in self.keywordless.items()}
