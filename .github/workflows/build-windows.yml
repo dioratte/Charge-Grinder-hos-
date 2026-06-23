@@ -25,17 +25,17 @@ jobs:
 
       - name: Build with Nuitka (Onefile)
         run: |
-          python -m nuitka --onefile ^
-            --enable-plugin=pyside6 ^
-            --windows-console-mode=disable ^
-            --assume-yes-for-downloads ^
-            --windows-icon-from-ico=ImageAssets/app_icon.ico ^
-            --include-data-dir=ImageAssets/UI=ImageAssets/UI ^
-            --include-data-dir=ImageAssets/AppUI=ImageAssets/AppUI ^
-            --include-data-files=version=version ^
-            --include-data-files=source/utils/movement/model.npz=move_assets/model.npz ^
-            --include-data-files=source/utils/bridge/bridge.dll=move_assets/bridge.dll ^
-            --output-dir=build ^
+          python -m nuitka --onefile `
+            --enable-plugin=pyside6 `
+            --windows-console-mode=disable `
+            --assume-yes-for-downloads `
+            --windows-icon-from-ico=ImageAssets/app_icon.ico `
+            --include-data-dir=ImageAssets/UI=ImageAssets/UI `
+            --include-data-dir=ImageAssets/AppUI=ImageAssets/AppUI `
+            --include-data-files=version=version `
+            --include-data-files=source/utils/movement/model.npz=move_assets/model.npz `
+            --include-data-files=source/utils/bridge/bridge.dll=move_assets/bridge.dll `
+            --output-dir=build `
             App.py
 
       - name: Upload Artifact
