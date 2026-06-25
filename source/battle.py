@@ -403,7 +403,8 @@ def fight(lux=False):
                         gear_start = gui.center(LocateEdges.try_locate(PTH["gear"], region=(0, 761, 900, 179), conf=0.7))
                         gear_end = gui.center(LocateEdges.try_locate(PTH["gear2"], region=(350, 730, 1570, 232), conf=0.7))
                         is_focused = False
-                        if lux or p.WINRATE: raise gui.ImageNotFoundException
+                        # Thanks to @zombpr for finding this
+                        if lux: raise gui.ImageNotFoundException
                         background = screenshot(region=(round(gear_start[0] + 100), 775, round(gear_end[0] - gear_start[0] - 200), 10))
                         chain(gear_start, gear_end, background)
                         p.DEFENSE_TURNS += 1
@@ -412,7 +413,7 @@ def fight(lux=False):
                         gear_end = gui.center(LocateEdges.try_locate(PTH["gear2"], region=(350, 730, 1570, 232), conf=0.7))
                         is_focused = False
                         # cv2.imwrite(f"data/battle_skills/{time.time()}.png", screenshot(region=(round(gear_start[0] + 100), 775, round(gear_end[0] - gear_start[0] - 200), 150)))
-                        if lux or p.WINRATE: raise gui.ImageNotFoundException
+                        if lux: raise gui.ImageNotFoundException
                         background = screenshot(region=(round(gear_start[0] + 100), 775, round(gear_end[0] - gear_start[0] - 200), 10))
                         chain(gear_start, gear_end, background)
 

@@ -997,40 +997,34 @@ def buy_skill3():
 
 
 def revive_idiots():
-    if p.HOS_MODE is True:
-        return
-    else:
-        revivals = min(p.DEAD, balance()//100)
-        if revivals < 1: return
+    revivals = min(p.DEAD, balance()//100)
+    if revivals < 1: return
 
-        ClickAction((293, 705), ver="return").execute(click)
-        for _ in range(revivals):
-            if not wait_while_condition(lambda: now.button("return"), lambda: win_click(1545, 690), timer=3):
-                Action("return", ver=p.SUPER).execute(click)
-                return
-            Action("no_hp", ver="select").execute(click_rgb) # 1700 970
-            Action("select", ver="connecting").execute(click)
-            connection()
-            ClickAction((1545, 500), ver="return").execute(click)
-            time.sleep(0.2)
-        Action("return", ver=p.SUPER).execute(click)
+    ClickAction((293, 705), ver="return").execute(click)
+    for _ in range(revivals):
+        if not wait_while_condition(lambda: now.button("return"), lambda: win_click(1545, 690), timer=3):
+            Action("return", ver=p.SUPER).execute(click)
+            return
+        Action("no_hp", ver="select").execute(click_rgb) # 1700 970
+        Action("select", ver="connecting").execute(click)
+        connection()
+        ClickAction((1545, 500), ver="return").execute(click)
         time.sleep(0.2)
+    Action("return", ver=p.SUPER).execute(click)
+    time.sleep(0.2)
 
     def heal_all():
-        if p.HOS_MODE is True:
-            return
-        else:
-            if balance() < 100: return
+        if balance() < 100: return
 
-            ClickAction((293, 705), ver="return").execute(click)
-            try:
-                ClickAction((1545, 500), ver="connecting").execute(click)
-                connection()
-                time.sleep(0.2)
-            finally:
-                ClickAction((1545, 500), ver="return").execute(click)
-                Action("return", ver=p.SUPER).execute(click)
-                time.sleep(0.2)
+        ClickAction((293, 705), ver="return").execute(click)
+        try:
+            ClickAction((1545, 500), ver="connecting").execute(click)
+            connection()
+            time.sleep(0.2)
+        finally:
+            ClickAction((1545, 500), ver="return").execute(click)
+            Action("return", ver=p.SUPER).execute(click)
+            time.sleep(0.2)
 
 ### General
 def leave():
@@ -1062,8 +1056,9 @@ def shop():
         buy_skill3()
 
     if p.DEAD > 0 and p.HARD:
-        revive_idiots()
-        heal_all()
+        if not p.HOS_MODE:
+            revive_idiots()
+            heal_all()
 
     if p.LVL > 11:
         for _ in range(min(p.LVL - 11, 3)):
