@@ -1736,7 +1736,7 @@ class MyApp(QWidget):
             'enkephalin' : self.buttons['on3'].isChecked() if not self.is_lux else self.buttons['on9'].isChecked(),
             'skip'       : self.buttons['on4'].isChecked(),
             'wishmaking' : self.buttons['on5'].isChecked(),
-            'winrate'    : self.hard or self.buttons['on6'].isChecked(),
+            'winrate'    : self.hard or self.buttons['on6'].isChecked() if not p.HOS_MODE else self.buttons['on6'].isChecked(), # Thanks to @zombpr for finding this
             'infinity'   : self.hard and self.buttons['on6'].isChecked(),
             'hos_mode'   : self.hos_mode.isChecked(),
             'buff'       : [getattr(self.buttons[f'buff{i}'], 'config', {}).get('state', 0) for i in range(10)],
