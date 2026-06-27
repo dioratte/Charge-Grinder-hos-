@@ -67,7 +67,7 @@ def defense_turns():
             logging.info("You selected more than 10 sinners, why?")
         else:
             # MAX_DEFENSE increases with every odd number of selected sinners
-            for i in range(m.ceil((len(p.SELECTED) - p.DEAD) / 2)):
+            for i in range(m.ceil(len(p.SELECTED)) / 2):
                 p.MAX_DEFENSE += 1
 
 def get_lowskill():
